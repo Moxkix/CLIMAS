@@ -4,45 +4,44 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Recursos Köppen</title>
+  <meta name="description" content="Página de inicio con accesos a herramientas y tablas de la clasificación climática de Köppen." />
   <style>
     :root{
       --bg:#0f172a;
       --card:#111827;
       --text:#e5e7eb;
       --muted:#94a3b8;
-      --accent:#22d3ee;
       --ring:#1f2937;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
       margin:0;
-      font-family:system-ui,-apple-system,Segoe UI,Roboto;
-      background:var(--bg);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";
+      background:radial-gradient(1200px 600px at 10% -10%, #0b1225 0%, transparent 60%),
+                 radial-gradient(1200px 600px at 110% 10%, #0b1225 0%, transparent 60%),
+                 var(--bg);
       color:var(--text);
       display:flex; align-items:center; justify-content:center;
       padding:32px;
     }
     .wrap{width:min(1100px,100%);}
     header{text-align:center; margin-bottom:28px;}
-    h1{font-size:2.2rem; margin:0 0 6px;}
+    h1{font-size:clamp(1.6rem, 2.4vw + 1rem, 2.4rem); margin:0 0 6px;}
     .grid{
       display:grid;
       grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
-      gap:18px;
-      margin-top:22px;
+      gap:18px; margin-top:22px;
     }
     a.card{
-      display:block;
-      text-decoration:none;
-      background:var(--card);
+      display:block; text-decoration:none;
+      background:linear-gradient(180deg, rgba(255,255,255,.04), transparent 18%) var(--card);
       border:1px solid var(--ring);
-      border-radius:18px;
-      padding:20px;
-      transition:.2s transform ease, .2s border-color ease;
-      min-height:150px;
+      border-radius:18px; padding:20px;
+      transition:.2s transform ease, .2s border-color ease, .2s box-shadow ease;
+      box-shadow:0 8px 24px rgba(0,0,0,.24); min-height:150px;
     }
-    a.card:hover{ transform:translateY(-3px); border-color:rgba(96,165,250,.45);}
+    a.card:hover{ transform:translateY(-3px); border-color:rgba(96,165,250,.45); box-shadow:0 12px 30px rgba(0,0,0,.32); }
     .title{font-size:1.15rem; font-weight:700; margin:2px 0 8px;}
     .desc{ color:var(--muted); font-size:.95rem; line-height:1.45 }
     footer{text-align:center; color:var(--muted); font-size:.85rem; margin-top:28px;}
@@ -55,21 +54,26 @@
     <section class="grid">
       <a class="card" href="./calculadora_koppen2.html">
         <div class="title">Calculadora Köppen</div>
-        <div class="desc">Herramienta interactiva.</div>
+        <div class="desc">Herramienta interactiva de clasificación climática.</div>
       </a>
 
       <a class="card" href="./tabla_koppen_interactiva.html">
         <div class="title">Tabla Köppen interactiva</div>
-        <div class="desc">Filtra, busca códigos y ejemplos.</div>
+        <div class="desc">Filtra, busca códigos y consulta ejemplos.</div>
       </a>
 
       <a class="card" href="./TABLA_RESUMEN_CLIMAS_KOPPEN.html">
         <div class="title">Resumen visual Köppen</div>
-        <div class="desc">Reglas de subcódigos y criterios.</div>
+        <div class="desc">Criterios y subcódigos de referencia rápida.</div>
+      </a>
+
+      <a class="card" href="./app_climograma.html">
+        <div class="title">Herramienta para crear Climogramas</div>
+        <div class="desc">Genera climogramas con escala estándar 10°C = 20&nbsp;mm.</div>
       </a>
     </section>
 
-    <footer>© <span id="y"></span></footer>
+    <footer>© <span id="y"></span> · UNED · Geografía</footer>
     <script>document.getElementById('y').textContent = new Date().getFullYear()</script>
   </main>
 </body>
