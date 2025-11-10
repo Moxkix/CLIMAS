@@ -425,6 +425,11 @@
             .header h1 {
                 font-size: 2em;
             }
+            
+            #climogramCanvas {
+                width: 100% !important;
+                height: auto !important;
+            }
         }
         
         .legend {
@@ -456,6 +461,59 @@
         .legend li::before {
             content: "🌍 ";
             margin-right: 8px;
+        }
+        
+        .climogram-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            border: 2px solid #90EE90;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        
+        .climogram-container h3 {
+            color: #2E5902;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 1.3em;
+        }
+        
+        #climogramCanvas {
+            display: block;
+            margin: 0 auto;
+            max-width: 100%;
+            height: auto;
+        }
+        
+        .climogram-legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95em;
+            color: #3E5A02;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+        
+        .legend-temp {
+            background: #FF6B35;
+        }
+        
+        .legend-precip {
+            background: #4A90E2;
         }
         
         .example-buttons {
@@ -636,6 +694,21 @@
                     <div class="explanation-section">
                         <h3>📖 Explicación Detallada</h3>
                         <div id="explanationText"></div>
+                    </div>
+                    
+                    <div class="climogram-container">
+                        <h3>📊 Climograma Típico</h3>
+                        <canvas id="climogramCanvas" width="700" height="400"></canvas>
+                        <div class="climogram-legend">
+                            <div class="legend-item">
+                                <div class="legend-color legend-temp"></div>
+                                <span><strong>Temperatura (°C)</strong></span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color legend-precip"></div>
+                                <span><strong>Precipitación (mm)</strong></span>
+                            </div>
+                        </div>
                     </div>
                     
                     <div class="explanation-section">
@@ -988,7 +1061,7 @@
                 }
             }
             
-            mostrarResultado(climateCode, climateName, explanation, steps, characteristics, regions, learningTip);
+            mostrarResultado(climateCode, climateName, explanation, steps, characteristics, regions, learningTip, tempAnual, tempFrio, tempCalido, precipAnual, distribucion);
         }
         
         function calcularEvapotranspiracion(tempAnual, precipInvierno) {
@@ -1010,7 +1083,235 @@
             document.getElementById('resultContent').classList.remove('show');
         }
         
-        function mostrarResultado(code, name, explanation, steps, characteristics, regions, learningTip) {
+        function generarDatosClimaticos(climateCode, tempAnual, tempFrio, tempCalido, precipAnual, distribucion) {
+            const meses = ['E', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
+            let temperaturas = [];
+            let precipitaciones = [];
+            
+            // Generar temperaturas mensuales (curva sinusoidal realista)
+            const amplitud = (tempCalido - tempFrio) / 2;
+            const media = (tempCalido + tempFrio) / 2;
+            
+            for (let i = 0; i < 12; i++) {
+                // Hemisferio norte: máximo en julio (mes 6), mínimo en enero (mes 0)
+                const fase = (i - 1) * Math.PI / 6; // Desfase para que enero sea mínimo
+                const temp = media + amplitud * Math.sin(fase);
+                temperaturas.push(Math.round(temp * 10) / 10);
+            }
+            
+            // Generar precipitaciones según el tipo de clima y distribución real
+            const precipMedia = precipAnual / 12;
+            
+            if (climateCode.startsWith('Af')) {
+                // Ecuatorial: uniforme con ligera variación
+                const variacion = 0.15; // 15% de variación
+                precipitaciones = Array(12).fill(0).map((_, i) => {
+                    const factor = 1 + (Math.sin(i * Math.PI / 6) * variacion);
+                    return Math.round(precipMedia * factor);
+                });
+            } else if (climateCode.startsWith('Am')) {
+                // Monzónico: verano muy lluvioso, corta estación seca
+                const patron = [0.08, 0.05, 0.05, 0.08, 0.12, 0.15, 0.18, 0.15, 0.08, 0.03, 0.02, 0.05];
+                precipitaciones = patron.map(p => Math.round(precipAnual * p));
+            } else if (climateCode.startsWith('Aw')) {
+                // Tropical de sabana: marcada estación seca en invierno
+                const patron = [0.02, 0.02, 0.04, 0.08, 0.12, 0.15, 0.18, 0.16, 0.12, 0.07, 0.03, 0.02];
+                precipitaciones = patron.map(p => Math.round(precipAnual * p));
+            } else if (climateCode.includes('Cs')) {
+                // Mediterráneo: verano muy seco, invierno lluvioso
+                const patron = [0.12, 0.11, 0.10, 0.08, 0.05, 0.02, 0.01, 0.01, 0.04, 0.10, 0.13, 0.13];
+                precipitaciones = patron.map(p => Math.round(precipAnual * p));
+            } else if (climateCode.includes('Cw')) {
+                // Invierno seco, verano lluvioso
+                const patron = [0.02, 0.03, 0.05, 0.08, 0.12, 0.15, 0.18, 0.16, 0.12, 0.06, 0.02, 0.02];
+                precipitaciones = patron.map(p => Math.round(precipAnual * p));
+            } else if (climateCode.includes('Cf')) {
+                // Sin estación seca, distribución más uniforme
+                const patron = [0.08, 0.07, 0.08, 0.08, 0.09, 0.09, 0.10, 0.09, 0.08, 0.09, 0.09, 0.08];
+                precipitaciones = patron.map(p => Math.round(precipAnual * p));
+            } else if (climateCode.startsWith('BW')) {
+                // Desértico: muy poca lluvia, irregular
+                const patron = [0.10, 0.06, 0.04, 0.10, 0.15, 0.04, 0.02, 0.02, 0.06, 0.15, 0.18, 0.13];
+                precipitaciones = patron.map(p => Math.round(precipAnual * p));
+            } else if (climateCode.startsWith('BS')) {
+                // Estepario: poca lluvia con ligero máximo
+                const patron = [0.08, 0.07, 0.09, 0.10, 0.11, 0.09, 0.07, 0.05, 0.08, 0.10, 0.09, 0.08];
+                precipitaciones = patron.map(p => Math.round(precipAnual * p));
+            } else if (climateCode.startsWith('D')) {
+                // Continental: máximo en verano, mínimo en invierno
+                const patron = [0.06, 0.05, 0.07, 0.09, 0.11, 0.13, 0.14, 0.12, 0.10, 0.08, 0.07, 0.06];
+                precipitaciones = patron.map(p => Math.round(precipAnual * p));
+            } else if (climateCode.startsWith('ET')) {
+                // Tundra: muy poca precipitación, máximo en verano
+                const patron = [0.08, 0.07, 0.06, 0.07, 0.09, 0.11, 0.13, 0.13, 0.11, 0.10, 0.08, 0.08];
+                precipitaciones = patron.map(p => Math.round(precipAnual * p));
+            } else if (climateCode.startsWith('EF')) {
+                // Hielos perpetuos: mínima precipitación
+                const patron = [0.08, 0.08, 0.05, 0.05, 0.08, 0.13, 0.16, 0.13, 0.08, 0.08, 0.08, 0.08];
+                precipitaciones = patron.map(p => Math.round(precipAnual * p));
+            } else {
+                // Por defecto: distribución relativamente uniforme
+                precipitaciones = Array(12).fill(Math.round(precipMedia));
+            }
+            
+            return { meses, temperaturas, precipitaciones };
+        }
+        
+        function dibujarClimagrama(climateCode, tempAnual, tempFrio, tempCalido, precipAnual, distribucion) {
+            const canvas = document.getElementById('climogramCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Ajustar tamaño del canvas para responsividad
+            const container = canvas.parentElement;
+            const containerWidth = container.clientWidth - 50; // Padding
+            if (containerWidth < 700) {
+                canvas.width = containerWidth;
+                canvas.height = Math.round(containerWidth * 0.57); // Mantener proporción
+            } else {
+                canvas.width = 700;
+                canvas.height = 400;
+            }
+            
+            // Limpiar canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Obtener datos
+            const datos = generarDatosClimaticos(climateCode, tempAnual, tempFrio, tempCalido, precipAnual, distribucion);
+            
+            // Configuración del gráfico
+            const padding = { top: 40, right: 60, bottom: 50, left: 60 };
+            const chartWidth = canvas.width - padding.left - padding.right;
+            const chartHeight = canvas.height - padding.top - padding.bottom;
+            
+            // Escalas
+            const maxPrecip = Math.max(...datos.precipitaciones) * 1.2;
+            const minTemp = Math.min(...datos.temperaturas) - 5;
+            const maxTemp = Math.max(...datos.temperaturas) + 5;
+            
+            // Función para escalar precipitación
+            const scaleY_precip = (value) => {
+                return padding.top + chartHeight - (value / maxPrecip * chartHeight);
+            };
+            
+            // Función para escalar temperatura
+            const scaleY_temp = (value) => {
+                return padding.top + chartHeight - ((value - minTemp) / (maxTemp - minTemp) * chartHeight);
+            };
+            
+            // Función para posición X
+            const scaleX = (index) => {
+                return padding.left + (index + 0.5) * (chartWidth / 12);
+            };
+            
+            // Dibujar ejes
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(padding.left, padding.top);
+            ctx.lineTo(padding.left, canvas.height - padding.bottom);
+            ctx.lineTo(canvas.width - padding.right, canvas.height - padding.bottom);
+            ctx.stroke();
+            
+            // Dibujar barras de precipitación
+            const barWidth = chartWidth / 12 * 0.6;
+            ctx.fillStyle = '#4A90E2';
+            datos.precipitaciones.forEach((precip, i) => {
+                const x = scaleX(i) - barWidth / 2;
+                const y = scaleY_precip(precip);
+                const height = canvas.height - padding.bottom - y;
+                ctx.fillRect(x, y, barWidth, height);
+            });
+            
+            // Dibujar línea de temperatura
+            ctx.strokeStyle = '#FF6B35';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            datos.temperaturas.forEach((temp, i) => {
+                const x = scaleX(i);
+                const y = scaleY_temp(temp);
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            });
+            ctx.stroke();
+            
+            // Dibujar puntos en la línea de temperatura
+            ctx.fillStyle = '#FF6B35';
+            datos.temperaturas.forEach((temp, i) => {
+                const x = scaleX(i);
+                const y = scaleY_temp(temp);
+                ctx.beginPath();
+                ctx.arc(x, y, 4, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            
+            // Etiquetas de meses
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            datos.meses.forEach((mes, i) => {
+                const x = scaleX(i);
+                ctx.fillText(mes, x, canvas.height - padding.bottom + 25);
+            });
+            
+            // Escala de precipitación (izquierda)
+            ctx.textAlign = 'right';
+            ctx.font = '12px Arial';
+            ctx.fillStyle = '#4A90E2';
+            for (let i = 0; i <= 5; i++) {
+                const value = Math.round(maxPrecip / 5 * i);
+                const y = scaleY_precip(value);
+                ctx.fillText(value + '', padding.left - 10, y + 4);
+                
+                // Línea de cuadrícula
+                ctx.strokeStyle = '#e0e0e0';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(padding.left, y);
+                ctx.lineTo(canvas.width - padding.right, y);
+                ctx.stroke();
+            }
+            
+            // Etiqueta eje Y precipitación
+            ctx.save();
+            ctx.translate(15, canvas.height / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.textAlign = 'center';
+            ctx.font = 'bold 14px Arial';
+            ctx.fillStyle = '#4A90E2';
+            ctx.fillText('Precipitación (mm)', 0, 0);
+            ctx.restore();
+            
+            // Escala de temperatura (derecha)
+            ctx.textAlign = 'left';
+            ctx.font = '12px Arial';
+            ctx.fillStyle = '#FF6B35';
+            for (let i = 0; i <= 5; i++) {
+                const value = Math.round(minTemp + (maxTemp - minTemp) / 5 * i);
+                const y = scaleY_temp(value);
+                ctx.fillText(value + '°', canvas.width - padding.right + 10, y + 4);
+            }
+            
+            // Etiqueta eje Y temperatura
+            ctx.save();
+            ctx.translate(canvas.width - 15, canvas.height / 2);
+            ctx.rotate(Math.PI / 2);
+            ctx.textAlign = 'center';
+            ctx.font = 'bold 14px Arial';
+            ctx.fillStyle = '#FF6B35';
+            ctx.fillText('Temperatura (°C)', 0, 0);
+            ctx.restore();
+            
+            // Título
+            ctx.textAlign = 'center';
+            ctx.font = 'bold 16px Arial';
+            ctx.fillStyle = '#2E5902';
+            ctx.fillText('Climograma - Clima ' + climateCode, canvas.width / 2, 25);
+        }
+        
+        function mostrarResultado(code, name, explanation, steps, characteristics, regions, learningTip, tempAnual, tempFrio, tempCalido, precipAnual, distribucion) {
             document.getElementById('errorMessage').classList.remove('show');
             
             document.getElementById('climateCode').textContent = code;
@@ -1028,6 +1329,9 @@
             
             const codeExplanation = explicarCodigo(code);
             document.getElementById('explanationText').innerHTML += codeExplanation;
+            
+            // Dibujar climograma
+            dibujarClimagrama(code, tempAnual, tempFrio, tempCalido, precipAnual, distribucion);
             
             if (learningTip) {
                 const learningTipDiv = document.getElementById('learningTip');
