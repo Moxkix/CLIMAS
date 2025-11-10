@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora Köppen - Climogramas</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #6B8E23 0%, #228B22 50%, #2E8B57 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            background: rgba(34, 139, 34, 0.3);
+            padding: 30px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+        .header h1 { font-size: 2.5em; margin-bottom: 10px; }
+        .card {
+            background: linear-gradient(135deg, #FFFEF2 0%, #F0FFF0 100%);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .btn {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #228B22 0%, #6B8E23 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+        }
+        .btn:hover { transform: translateY(-2px); }
+        #climogramSection {
+            max-width: 1200px;
+            margin: 30px auto;
+            display: none;
+        }
+        #climogramCanvas {
+            display: block;
+            margin: 20px auto;
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌍 Calculadora Climática de Köppen</h1>
+            <p>Aprende a clasificar los climas del mundo</p>
+        </div>
+        
+        <div class="card">
+            <h2>📊 Parámetros Climáticos</h2>
+            <div style="margin: 20px 0;">
+                <label>Temperatura Anual (°C):</label>
+                <input type="number" id="tempAnual" step="0.1" style="width: 100%; padding: 10px; margin: 5px 0;">
+            </div>
+            <div style="margin: 20px 0;">
+                <label>Temperatura Mes Frío (°C):</label>
+                <input type="number" id="tempFrio" step="0.1" style="width: 100%; padding: 10px; margin: 5px 0;">
+            </div>
+            <div style="margin: 20px 0;">
+                <label>Temperatura Mes Cálido (°C):</label>
+                <input type="number" id="tempCalido" step="0.1" style="width: 100%; padding: 10px; margin: 5px 0;">
+            </div>
+            <div style="margin: 20px 0;">
+                <label>Precipitación Anual (mm):</label>
+                <input type="number" id="precipAnual" step="0.1" style="width: 100%; padding: 10px; margin: 5px 0;">
+            </div>
+            <button class="btn" onclick="calcular()">🔍 Calcular Clima</button>
+        </div>
+        
+        <div class="card" id="resultado" style="display: none;">
+            <h2 id="climaTitulo"></h2>
+            <p id="climaDescripcion"></p>
+        </div>
+    </div>
+    
+    <div id="climogramSection">
+        <div class="card">
+            <h2>📊 Climograma - <span id="climogramTitle"></span></h2>
+            <canvas id="climogramCanvas" width="1100" height="500"></canvas>
+        </div>
+    </div>
+    
+    <script>
+        function calcular() {
+            const tempAnual = parseFloat(document.getElementById('tempAnual').value);
+            const tempFrio = parseFloat(document.getElementById('tempFrio').value);
+            const tempCalido = parseFloat(document.getElementById('tempCalido').value);
+            const precipAnual = parseFloat(document.getElementById('precipAnual').value);
+            
+            if (isNaN(tempAnual) || isNaN(tempFrio) || isNaN(tempCalido) || isNaN(precipAnual)) {
+                alert('Por favor completa todos los campos');
+                return;
+            }
+            
+            let codigo = 'Csa';
+            let nombre = 'Mediterráneo';
+            
+            document.getElementById('resultado').style.display = 'block';
+            document.getElementById('climaTitulo').textContent = `Clima: ${codigo} - ${nombre}`;
+            document.getElementById('climaDescripcion').textContent = 'Clima mediterráneo con veranos secos';
+            
+            document.getElementById('climogramSection').style.display = 'block';
+            document.getElementById('climogramTitle').textContent = codigo;
+            
+            dibujarClimagrama(tempFrio, tempCalido, precipAnual);
+            
+            setTimeout(() => {
+                document.getElementById('climogramSection').scrollIntoView({ behavior: 'smooth' });
+            }, 300);
+        }
+        
+        function dibujarClimagrama(tempMin, tempMax, precipTotal) {
+            const canvas = document.getElementById('climogramCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Datos de ejemplo
+            const meses = ['E', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
+            const temps = [10, 11, 13, 15, 18, 22, 25, 25, 22, 18, 14, 11];
+            const precips = [60, 55, 50, 40, 25, 10, 5, 5, 20, 50, 65, 70];
+            
+            const padding = { top: 50, right: 80, bottom: 70, left: 80 };
+            const chartWidth = canvas.width - padding.left - padding.right;
+            const chartHeight = canvas.height - padding.top - padding.bottom;
+            
+            // Escalas con proporción 10°C = 20mm
+            const minTemp = 0;
+            const maxTemp = 30;
+            const rangoTemp = maxTemp - minTemp;
+            const maxPrecip = rangoTemp * 2; // 60mm
+            
+            const scaleY_temp = (value) => {
+                return padding.top + chartHeight * (1 - (value - minTemp) / rangoTemp);
+            };
+            
+            const scaleY_precip = (value) => {
+                return padding.top + chartHeight * (1 - value / maxPrecip);
+            };
+            
+            const scaleX = (index) => {
+                return padding.left + (index + 0.5) * (chartWidth / 12);
+            };
+            
+            // Cuadrícula
+            ctx.strokeStyle = '#e0e0e0';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 6; i++) {
+                const y = padding.top + (chartHeight / 6) * i;
+                ctx.beginPath();
+                ctx.moveTo(padding.left, y);
+                ctx.lineTo(canvas.width - padding.right, y);
+                ctx.stroke();
+            }
+            
+            // Barras de precipitación
+            const barWidth = chartWidth / 12 * 0.7;
+            ctx.fillStyle = '#4A90E2';
+            precips.forEach((precip, i) => {
+                const x = scaleX(i) - barWidth / 2;
+                const y = scaleY_precip(precip);
+                const height = canvas.height - padding.bottom - y;
+                ctx.fillRect(x, y, barWidth, height);
+            });
+            
+            // Línea de temperatura
+            ctx.strokeStyle = '#FF6B35';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            temps.forEach((temp, i) => {
+                const x = scaleX(i);
+                const y = scaleY_temp(temp);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+            
+            // Puntos
+            ctx.fillStyle = '#FF6B35';
+            temps.forEach((temp, i) => {
+                const x = scaleX(i);
+                const y = scaleY_temp(temp);
+                ctx.beginPath();
+                ctx.arc(x, y, 6, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            
+            // Etiquetas meses
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            meses.forEach((mes, i) => {
+                ctx.fillText(mes, scaleX(i), canvas.height - padding.bottom + 30);
+            });
+            
+            // Escala precipitación (izquierda)
+            ctx.textAlign = 'right';
+            ctx.font = 'bold 14px Arial';
+            ctx.fillStyle = '#4A90E2';
+            for (let i = 0; i <= 6; i++) {
+                const value = Math.round((maxPrecip / 6) * i);
+                const y = scaleY_precip(value);
+                ctx.fillText(value + ' mm', padding.left - 15, y + 5);
+            }
+            
+            // Escala temperatura (derecha)
+            ctx.textAlign = 'left';
+            ctx.fillStyle = '#FF6B35';
+            for (let i = 0; i <= 6; i++) {
+                const value = Math.round(minTemp + (rangoTemp / 6) * i);
+                const y = scaleY_temp(value);
+                ctx.fillText(value + '°C', canvas.width - padding.right + 15, y + 5);
+            }
+            
+            // Título
+            ctx.textAlign = 'center';
+            ctx.font = 'bold 20px Arial';
+            ctx.fillStyle = '#2E5902';
+            ctx.fillText('Climograma con escala 10°C = 20mm', canvas.width / 2, 30);
+        }
+        
+        // Probar que el elemento existe
+        console.log('Elemento climogramSection:', document.getElementById('climogramSection'));
+    </script>
+</body>
+</html>
