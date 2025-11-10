@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clasificación Climática de Köppen - Tabla Interactiva</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .controls {
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        .filter-btn {
+            padding: 10px 20px;
+            border: none;
+            background: #6c757d;
+            color: white;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .filter-btn:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .filter-btn.active {
+            background: #764ba2;
+        }
+        
+        .table-container {
+            padding: 20px;
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 0.95em;
+        }
+        
+        thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        tbody tr {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        tbody tr:hover {
+            background: #f0f0f0;
+            transform: scale(1.01);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        tbody tr.hidden {
+            display: none;
+        }
+        
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .clima-code {
+            display: inline-block;
+            padding: 5px 10px;
+            background: #667eea;
+            color: white;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        
+        .grupo-A { background: #ff6b6b !important; }
+        .grupo-B { background: #feca57 !important; }
+        .grupo-C { background: #48dbfb !important; }
+        .grupo-D { background: #0abde3 !important; }
+        .grupo-E { background: #006ba6 !important; }
+        .grupo-G { background: #6c757d !important; }
+        .grupo-H { background: #495057 !important; }
+        
+        .temperatura {
+            color: #e74c3c;
+            font-weight: 500;
+        }
+        
+        .precipitacion {
+            color: #3498db;
+            font-weight: 500;
+        }
+        
+        .vegetacion {
+            color: #27ae60;
+            font-style: italic;
+        }
+        
+        .info-panel {
+            position: fixed;
+            top: 50%;
+            right: -400px;
+            transform: translateY(-50%);
+            width: 380px;
+            background: white;
+            border-radius: 20px 0 0 20px;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.2);
+            padding: 30px;
+            transition: right 0.3s ease;
+            z-index: 1000;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .info-panel.active {
+            right: 0;
+        }
+        
+        .info-panel h3 {
+            color: #764ba2;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+        
+        .info-panel p {
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+        
+        .close-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2em;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            padding: 20px;
+            background: #f8f9fa;
+            margin: 20px;
+            border-radius: 15px;
+        }
+        
+        .stat-card {
+            text-align: center;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            min-width: 150px;
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #764ba2;
+        }
+        
+        .stat-label {
+            font-size: 0.9em;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 20px;
+            background: #f8f9fa;
+            margin: 20px;
+            border-radius: 15px;
+            justify-content: center;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+        }
+        
+        @media (max-width: 768px) {
+            .info-panel {
+                width: 100%;
+                right: -100%;
+                border-radius: 0;
+            }
+            
+            table {
+                font-size: 0.85em;
+            }
+            
+            .stats {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+        
+        .search-box {
+            padding: 10px 20px;
+            border: 2px solid #667eea;
+            border-radius: 25px;
+            font-size: 1em;
+            width: 300px;
+            transition: all 0.3s ease;
+        }
+        
+        .search-box:focus {
+            outline: none;
+            border-color: #764ba2;
+            box-shadow: 0 0 10px rgba(118, 75, 162, 0.3);
+        }
+        
+        .highlight {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { background-color: #fff3cd; }
+            50% { background-color: #fff9e6; }
+            100% { background-color: #fff3cd; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌍 Clasificación Climática de Köppen</h1>
+            <p>Tabla interactiva para el estudio de los climas mundiales</p>
+            <p style="font-size: 0.9em; margin-top: 10px;">UNED - Geografía General I</p>
+        </div>
+        
+        <div class="controls">
+            <input type="text" class="search-box" placeholder="🔍 Buscar clima..." id="searchBox">
+            <button class="filter-btn active" data-filter="all">Todos los climas</button>
+            <button class="filter-btn" data-filter="A">A - Cálidos</button>
+            <button class="filter-btn" data-filter="B">B - Secos</button>
+            <button class="filter-btn" data-filter="C">C - Templados</button>
+            <button class="filter-btn" data-filter="D">D - Temp. Fríos</button>
+            <button class="filter-btn" data-filter="E">E - Polares</button>
+            <button class="filter-btn" data-filter="G">G - Montaña</button>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalClimas">0</div>
+                <div class="stat-label">Tipos de clima</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="visibleClimas">0</div>
+                <div class="stat-label">Climas visibles</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">7</div>
+                <div class="stat-label">Grupos principales</div>
+            </div>
+        </div>
+        
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color grupo-A"></div>
+                <span>Cálidos</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color grupo-B"></div>
+                <span>Secos</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color grupo-C"></div>
+                <span>Templados</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color grupo-D"></div>
+                <span>Templados fríos</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color grupo-E"></div>
+                <span>Polares</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color grupo-G"></div>
+                <span>Montaña</span>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <table id="climaTable">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Grupo</th>
+                        <th>Tipo de Clima</th>
+                        <th>Temperatura</th>
+                        <th>Precipitación</th>
+                        <th>Vegetación</th>
+                        <th>Ejemplos</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Grupo A - Climas cálidos -->
+                    <tr data-group="A" data-code="Af">
+                        <td><span class="clima-code grupo-A">Af</span></td>
+                        <td>A - Cálido</td>
+                        <td><strong>Ecuatorial</strong></td>
+                        <td class="temperatura">T media mensual > 18°C</td>
+                        <td class="precipitacion">Sin estación seca (f)</td>
+                        <td class="vegetacion">Selva tropical</td>
+                        <td>Amazonas, Congo, Indonesia</td>
+                    </tr>
+                    <tr data-group="A" data-code="Am">
+                        <td><span class="clima-code grupo-A">Am</span></td>
+                        <td>A - Cálido</td>
+                        <td><strong>Monzónico</strong></td>
+                        <td class="temperatura">T media mensual > 18°C</td>
+                        <td class="precipitacion">Corta estación seca (m)</td>
+                        <td class="vegetacion">Bosque monzónico</td>
+                        <td>India, Myanmar, Bangladesh</td>
+                    </tr>
+                    <tr data-group="A" data-code="Aw">
+                        <td><span class="clima-code grupo-A">Aw</span></td>
+                        <td>A - Cálido</td>
+                        <td><strong>Tropical de sabana</strong></td>
+                        <td class="temperatura">T media mensual > 18°C</td>
+                        <td class="precipitacion">Invierno seco (w)</td>
+                        <td class="vegetacion">Sabana</td>
+                        <td>África Oriental, Brasil central</td>
+                    </tr>
+                    <tr data-group="A" data-code="As">
+                        <td><span class="clima-code grupo-A">As</span></td>
+                        <td>A - Cálido</td>
+                        <td><strong>Tropical con verano seco</strong></td>
+                        <td class="temperatura">T media mensual > 18°C</td>
+                        <td class="precipitacion">Verano seco (s)</td>
+                        <td class="vegetacion">Bosque tropical seco</td>
+                        <td>Algunas zonas costeras</td>
+                    </tr>
+                    
+                    <!-- Grupo B - Climas secos -->
+                    <tr data-group="B" data-code="BWh">
+                        <td><span class="clima-code grupo-B">BWh</span></td>
+                        <td>B - Seco</td>
+                        <td><strong>Desértico cálido</strong></td>
+                        <td class="temperatura">T media anual > 18°C</td>
+                        <td class="precipitacion">ETP > 2×Pmm</td>
+                        <td class="vegetacion">Plantas xerófilas</td>
+                        <td>Sahara, Arabia, Australia central</td>
+                    </tr>
+                    <tr data-group="B" data-code="BWk">
+                        <td><span class="clima-code grupo-B">BWk</span></td>
+                        <td>B - Seco</td>
+                        <td><strong>Desértico frío</strong></td>
+                        <td class="temperatura">T media anual < 18°C</td>
+                        <td class="precipitacion">ETP > 2×Pmm</td>
+                        <td class="vegetacion">Vegetación muy escasa</td>
+                        <td>Gobi, Patagonia</td>
+                    </tr>
+                    <tr data-group="B" data-code="BSh">
+                        <td><span class="clima-code grupo-B">BSh</span></td>
+                        <td>B - Seco</td>
+                        <td><strong>Estepario cálido</strong></td>
+                        <td class="temperatura">T media anual > 18°C</td>
+                        <td class="precipitacion">ETP > Pmm (no dobla)</td>
+                        <td class="vegetacion">Estepa, herbáceas</td>
+                        <td>Sahel, India occidental</td>
+                    </tr>
+                    <tr data-group="B" data-code="BSk">
+                        <td><span class="clima-code grupo-B">BSk</span></td>
+                        <td>B - Seco</td>
+                        <td><strong>Estepario frío</strong></td>
+                        <td class="temperatura">T media anual < 18°C</td>
+                        <td class="precipitacion">ETP > Pmm (no dobla)</td>
+                        <td class="vegetacion">Pradera seca</td>
+                        <td>Kazajistán, Mongolia</td>
+                    </tr>
+                    
+                    <!-- Grupo C - Climas templados -->
+                    <tr data-group="C" data-code="Cfa">
+                        <td><span class="clima-code grupo-C">Cfa</span></td>
+                        <td>C - Templado</td>
+                        <td><strong>Subtropical húmedo</strong></td>
+                        <td class="temperatura">-3°C < T mes frío < 18°C; T mes cálido > 22°C</td>
+                        <td class="precipitacion">Sin estación seca (f)</td>
+                        <td class="vegetacion">Bosque subtropical</td>
+                        <td>SE de EEUU, E de China</td>
+                    </tr>
+                    <tr data-group="C" data-code="Cfb">
+                        <td><span class="clima-code grupo-C">Cfb</span></td>
+                        <td>C - Templado</td>
+                        <td><strong>Oceánico</strong></td>
+                        <td class="temperatura">-3°C < T mes frío < 18°C; T mes cálido < 22°C</td>
+                        <td class="precipitacion">Sin estación seca (f)</td>
+                        <td class="vegetacion">Bosque caducifolio</td>
+                        <td>Europa occidental, Chile sur</td>
+                    </tr>
+                    <tr data-group="C" data-code="Cfc">
+                        <td><span class="clima-code grupo-C">Cfc</span></td>
+                        <td>C - Templado</td>
+                        <td><strong>Subpolar oceánico</strong></td>
+                        <td class="temperatura">-3°C < T mes frío; menos de 4 meses > 10°C</td>
+                        <td class="precipitacion">Sin estación seca (f)</td>
+                        <td class="vegetacion">Bosque boreal mixto</td>
+                        <td>Islandia, Escocia norte</td>
+                    </tr>
+                    <tr data-group="C" data-code="Csa">
+                        <td><span class="clima-code grupo-C">Csa</span></td>
+                        <td>C - Templado</td>
+                        <td><strong>Mediterráneo típico</strong></td>
+                        <td class="temperatura">-3°C < T mes frío < 18°C; T mes cálido > 22°C</td>
+                        <td class="precipitacion">Verano seco (s)</td>
+                        <td class="vegetacion">Bosque mediterráneo</td>
+                        <td>Mediterráneo, California</td>
+                    </tr>
+                    <tr data-group="C" data-code="Csb">
+                        <td><span class="clima-code grupo-C">Csb</span></td>
+                        <td>C - Templado</td>
+                        <td><strong>Mediterráneo oceánico</strong></td>
+                        <td class="temperatura">-3°C < T mes frío; T mes cálido < 22°C</td>
+                        <td class="precipitacion">Verano seco (s)</td>
+                        <td class="vegetacion">Matorral mediterráneo</td>
+                        <td>Portugal, California norte</td>
+                    </tr>
+                    <tr data-group="C" data-code="Cwa">
+                        <td><span class="clima-code grupo-C">Cwa</span></td>
+                        <td>C - Templado</td>
+                        <td><strong>Subtropical con invierno seco</strong></td>
+                        <td class="temperatura">-3°C < T mes frío < 18°C; T mes cálido > 22°C</td>
+                        <td class="precipitacion">Invierno seco (w)</td>
+                        <td class="vegetacion">Bosque mixto</td>
+                        <td>Norte de India, S de China</td>
+                    </tr>
+                    
+                    <!-- Grupo D - Climas templados de invierno riguroso -->
+                    <tr data-group="D" data-code="Dfa">
+                        <td><span class="clima-code grupo-D">Dfa</span></td>
+                        <td>D - Templado frío</td>
+                        <td><strong>Continental húmedo cálido</strong></td>
+                        <td class="temperatura">T mes frío < -3°C; T mes cálido > 22°C</td>
+                        <td class="precipitacion">Sin estación seca (f)</td>
+                        <td class="vegetacion">Bosque mixto</td>
+                        <td>Medio Oeste EEUU</td>
+                    </tr>
+                    <tr data-group="D" data-code="Dfb">
+                        <td><span class="clima-code grupo-D">Dfb</span></td>
+                        <td>D - Templado frío</td>
+                        <td><strong>Continental húmedo fresco</strong></td>
+                        <td class="temperatura">T mes frío < -3°C; 4 meses > 10°C</td>
+                        <td class="precipitacion">Sin estación seca (f)</td>
+                        <td class="vegetacion">Bosque boreal</td>
+                        <td>Canadá, Rusia europea</td>
+                    </tr>
+                    <tr data-group="D" data-code="Dfc">
+                        <td><span class="clima-code grupo-D">Dfc</span></td>
+                        <td>D - Templado frío</td>
+                        <td><strong>Subártico</strong></td>
+                        <td class="temperatura">T mes frío < -3°C; 1-3 meses > 10°C</td>
+                        <td class="precipitacion">Sin estación seca (f)</td>
+                        <td class="vegetacion">Taiga</td>
+                        <td>Siberia, Alaska interior</td>
+                    </tr>
+                    <tr data-group="D" data-code="Dfd">
+                        <td><span class="clima-code grupo-D">Dfd</span></td>
+                        <td>D - Templado frío</td>
+                        <td><strong>Subártico extremo</strong></td>
+                        <td class="temperatura">T mes frío < -38°C</td>
+                        <td class="precipitacion">Sin estación seca (f)</td>
+                        <td class="vegetacion">Taiga abierta</td>
+                        <td>Siberia oriental</td>
+                    </tr>
+                    <tr data-group="D" data-code="Dwa">
+                        <td><span class="clima-code grupo-D">Dwa</span></td>
+                        <td>D - Templado frío</td>
+                        <td><strong>Continental monzónico</strong></td>
+                        <td class="temperatura">T mes frío < -3°C; T mes cálido > 22°C</td>
+                        <td class="precipitacion">Invierno seco (w)</td>
+                        <td class="vegetacion">Bosque mixto</td>
+                        <td>Manchuria, Corea norte</td>
+                    </tr>
+                    
+                    <!-- Grupo E - Climas polares -->
+                    <tr data-group="E" data-code="ET">
+                        <td><span class="clima-code grupo-E">ET</span></td>
+                        <td>E - Polar</td>
+                        <td><strong>Tundra</strong></td>
+                        <td class="temperatura">T mes cálido 0-10°C</td>
+                        <td class="precipitacion">Escasas</td>
+                        <td class="vegetacion">Tundra (musgos, líquenes)</td>
+                        <td>Norte de Canadá, Siberia</td>
+                    </tr>
+                    <tr data-group="E" data-code="EF">
+                        <td><span class="clima-code grupo-E">EF</span></td>
+                        <td>E - Polar</td>
+                        <td><strong>Hielos perpetuos</strong></td>
+                        <td class="temperatura">T todos los meses < 0°C</td>
+                        <td class="precipitacion">Muy escasas</td>
+                        <td class="vegetacion">Sin vegetación</td>
+                        <td>Antártida, Groenlandia interior</td>
+                    </tr>
+                    
+                    <!-- Grupo G y H - Climas de montaña -->
+                    <tr data-group="G" data-code="G">
+                        <td><span class="clima-code grupo-G">G</span></td>
+                        <td>G - Montaña</td>
+                        <td><strong>Montaña</strong></td>
+                        <td class="temperatura">Variable con altitud</td>
+                        <td class="precipitacion">Aumentan con altura</td>
+                        <td class="vegetacion">Escalonada en pisos</td>
+                        <td>Alpes, Andes, Himalaya</td>
+                    </tr>
+                    <tr data-group="G" data-code="H">
+                        <td><span class="clima-code grupo-H">H</span></td>
+                        <td>H - Alta montaña</td>
+                        <td><strong>Alta montaña</strong></td>
+                        <td class="temperatura">Muy bajas (> 3000m)</td>
+                        <td class="precipitacion">Principalmente nieve</td>
+                        <td class="vegetacion">Alpina o sin vegetación</td>
+                        <td>Cumbres > 3000m</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div class="info-panel" id="infoPanel">
+        <button class="close-panel" onclick="closePanel()">×</button>
+        <h3 id="panelTitle">Información del Clima</h3>
+        <div id="panelContent"></div>
+    </div>
+    
+    <script>
+        // Datos adicionales para cada clima
+        const climaInfo = {
+            'Af': {
+                titulo: 'Clima Ecuatorial (Af)',
+                contenido: `
+                    <p><strong>Características principales:</strong></p>
+                    <p>• Temperaturas constantes todo el año (24-27°C)</p>
+                    <p>• Precipitaciones abundantes (>2000mm/año)</p>
+                    <p>• Humedad relativa muy alta (>80%)</p>
+                    <p>• Sin estaciones definidas</p>
+                    <p><strong>Formación:</strong> Convergencia de vientos alisios en la ZCIT</p>
+                    <p><strong>Regiones:</strong> Cuenca del Amazonas, Congo, Indonesia</p>
+                `
+            },
+            'Am': {
+                titulo: 'Clima Monzónico (Am)',
+                contenido: `
+                    <p><strong>Características principales:</strong></p>
+                    <p>• Temperaturas elevadas constantes</p>
+                    <p>• Estación seca corta (1-3 meses)</p>
+                    <p>• Precipitaciones totales > 2500mm/año</p>
+                    <p><strong>Formación:</strong> Alternancia estacional de masas de aire</p>
+                    <p><strong>Regiones:</strong> India occidental, Myanmar, Bangladesh</p>
+                `
+            },
+            'Aw': {
+                titulo: 'Clima Tropical de Sabana (Aw)',
+                contenido: `
+                    <p><strong>Características principales:</strong></p>
+                    <p>• Estación seca marcada en invierno</p>
+                    <p>• Estación húmeda en verano</p>
+                    <p>• Temperaturas altas todo el año</p>
+                    <p><strong>Formación:</strong> Desplazamiento estacional de la ZCIT</p>
+                    <p><strong>Regiones:</strong> África oriental, Brasil central, norte de Australia</p>
+                `
+            },
+            'BWh': {
+                titulo: 'Clima Desértico Cálido (BWh)',
+                contenido: `
+                    <p><strong>Características principales:</strong></p>
+                    <p>• Precipitaciones < 250mm/año</p>
+                    <p>• Amplitud térmica diaria muy alta (hasta 30°C)</p>
+                    <p>• Temperaturas extremas en verano (>45°C)</p>
+                    <p><strong>Formación:</strong> Altas presiones subtropicales permanentes</p>
+                    <p><strong>Regiones:</strong> Sahara, Arabia, desiertos de Australia</p>
+                `
+            },
+            'BSh': {
+                titulo: 'Clima Estepario Cálido (BSh)',
+                contenido: `
+                    <p><strong>Características principales:</strong></p>
+                    <p>• Precipitaciones 250-500mm/año</p>
+                    <p>• Vegetación herbácea</p>
+                    <p>• Transición entre desierto y climas húmedos</p>
+                    <p><strong>Formación:</strong> Márgenes de los desiertos</p>
+                    <p><strong>Regiones:</strong> Sahel, estepas de India</p>
+                `
+            },
+            'Csa': {
+                titulo: 'Clima Mediterráneo (Csa)',
+                contenido: `
+                    <p><strong>Características principales:</strong></p>
+                    <p>• Veranos secos y calurosos</p>
+                    <p>• Inviernos suaves y lluviosos</p>
+                    <p>• Precipitaciones 400-900mm/año</p>
+                    <p><strong>Formación:</strong> Alternancia de anticiclón subtropical y frente polar</p>
+                    <p><strong>Regiones:</strong> Cuenca mediterránea, California, Chile central</p>
+                `
+            },
+            'Cfb': {
+                titulo: 'Clima Oceánico (Cfb)',
+                contenido: `
+                    <p><strong>Características principales:</strong></p>
+                    <p>• Temperaturas moderadas todo el año</p>
+                    <p>• Precipitaciones regulares (800-2000mm/año)</p>
+                    <p>• Amplitud térmica anual reducida</p>
+                    <p><strong>Formación:</strong> Influencia permanente del frente polar</p>
+                    <p><strong>Regiones:</strong> Europa occidental, sur de Chile, Nueva Zelanda</p>
+                `
+            },
+            'Dfa': {
+                titulo: 'Clima Continental Húmedo (Dfa)',
+                contenido: `
+                    <p><strong>Características principales:</strong></p>
+                    <p>• Veranos cálidos e inviernos muy fríos</p>
+                    <p>• Gran amplitud térmica anual (>30°C)</p>
+                    <p>• Precipitaciones moderadas todo el año</p>
+                    <p><strong>Formación:</strong> Alejamiento del mar, masas de aire continental</p>
+                    <p><strong>Regiones:</strong> Medio oeste de EEUU, Ucrania</p>
+                `
+            },
+            'Dfc': {
+                titulo: 'Clima Subártico (Dfc)',
+                contenido: `
+                    <p><strong>Características principales:</strong></p>
+                    <p>• Inviernos extremadamente fríos</p>
+                    <p>• Veranos cortos y frescos</p>
+                    <p>• Dominio de la taiga</p>
+                    <p><strong>Formación:</strong> Masas de aire ártico en invierno</p>
+                    <p><strong>Regiones:</strong> Siberia, norte de Canadá, Alaska</p>
+                `
+            },
+            'ET': {
+                titulo: 'Clima de Tundra (ET)',
+                contenido: `
+                    <p><strong>Características principales:</strong></p>
+                    <p>• Verano muy corto (2-3 meses)</p>
+                    <p>• Permafrost en el subsuelo</p>
+                    <p>• Precipitaciones escasas (<250mm)</p>
+                    <p><strong>Formación:</strong> Latitudes muy altas, masas de aire polar</p>
+                    <p><strong>Regiones:</strong> Norte de Siberia, Canadá, Alaska</p>
+                `
+            },
+            'G': {
+                titulo: 'Clima de Montaña (G)',
+                contenido: `
+                    <p><strong>Características principales:</strong></p>
+                    <p>• Descenso térmico con la altitud (0.65°C/100m)</p>
+                    <p>• Precipitaciones aumentan con la altura</p>
+                    <p>• Pisos de vegetación escalonados</p>
+                    <p>• Inversiones térmicas frecuentes</p>
+                    <p><strong>Formación:</strong> Efecto de la altitud y relieve</p>
+                    <p><strong>Regiones:</strong> Todas las grandes cordilleras</p>
+                `
+            }
+        };
+        
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStats();
+            
+            // Filtros
+            const filterBtns = document.querySelectorAll('.filter-btn');
+            filterBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    filterBtns.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    filterTable(this.dataset.filter);
+                });
+            });
+            
+            // Búsqueda
+            const searchBox = document.getElementById('searchBox');
+            searchBox.addEventListener('input', function() {
+                searchTable(this.value);
+            });
+            
+            // Click en filas
+            const rows = document.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                row.addEventListener('click', function() {
+                    const code = this.dataset.code;
+                    if (climaInfo[code]) {
+                        showInfoPanel(climaInfo[code]);
+                    }
+                });
+            });
+        });
+        
+        function filterTable(filter) {
+            const rows = document.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                if (filter === 'all') {
+                    row.classList.remove('hidden');
+                } else {
+                    if (row.dataset.group === filter) {
+                        row.classList.remove('hidden');
+                    } else {
+                        row.classList.add('hidden');
+                    }
+                }
+            });
+            updateStats();
+        }
+        
+        function searchTable(searchTerm) {
+            const rows = document.querySelectorAll('tbody tr');
+            const term = searchTerm.toLowerCase();
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                if (text.includes(term)) {
+                    row.classList.remove('hidden');
+                    if (term.length > 0) {
+                        row.classList.add('highlight');
+                    } else {
+                        row.classList.remove('highlight');
+                    }
+                } else {
+                    row.classList.add('hidden');
+                    row.classList.remove('highlight');
+                }
+            });
+            updateStats();
+        }
+        
+        function updateStats() {
+            const totalRows = document.querySelectorAll('tbody tr').length;
+            const visibleRows = document.querySelectorAll('tbody tr:not(.hidden)').length;
+            
+            document.getElementById('totalClimas').textContent = totalRows;
+            document.getElementById('visibleClimas').textContent = visibleRows;
+        }
+        
+        function showInfoPanel(info) {
+            const panel = document.getElementById('infoPanel');
+            document.getElementById('panelTitle').textContent = info.titulo;
+            document.getElementById('panelContent').innerHTML = info.contenido;
+            panel.classList.add('active');
+        }
+        
+        function closePanel() {
+            document.getElementById('infoPanel').classList.remove('active');
+        }
+        
+        // Cerrar panel con ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closePanel();
+            }
+        });
+        
+        // Animación de entrada
+        window.addEventListener('load', function() {
+            const rows = document.querySelectorAll('tbody tr');
+            rows.forEach((row, index) => {
+                row.style.opacity = '0';
+                row.style.transform = 'translateX(-20px)';
+                setTimeout(() => {
+                    row.style.transition = 'all 0.5s ease';
+                    row.style.opacity = '1';
+                    row.style.transform = 'translateX(0)';
+                }, index * 30);
+            });
+        });
+    </script>
+</body>
+</html>

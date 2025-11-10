@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Clasificación Climática de Köppen</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #6B8E23 0%, #228B22 50%, #2E8B57 100%);
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(144, 238, 144, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(173, 216, 230, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            animation: fadeIn 0.5s ease;
+            background: rgba(34, 139, 34, 0.3);
+            padding: 30px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.95;
+        }
+        
+        .learning-badge {
+            display: inline-block;
+            background: rgba(255, 215, 0, 0.9);
+            color: #2E5902;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-top: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            animation: slideUp 0.6s ease;
+        }
+        
+        .card {
+            background: linear-gradient(135deg, #FFFEF2 0%, #F0FFF0 100%);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            border: 3px solid rgba(107, 142, 35, 0.3);
+        }
+        
+        .input-section h2 {
+            color: #2E5902;
+            margin-bottom: 25px;
+            font-size: 1.8em;
+            border-bottom: 3px solid #6B8E23;
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .input-group {
+            margin-bottom: 25px;
+            animation: fadeIn 0.8s ease;
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            border-left: 4px solid #6B8E23;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2E5902;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+        
+        .input-group input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #90EE90;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            background: #FAFFF0;
+        }
+        
+        .input-group input[type="number"]:focus {
+            outline: none;
+            border-color: #228B22;
+            box-shadow: 0 0 0 3px rgba(34, 139, 34, 0.1);
+            background: white;
+        }
+        
+        .input-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #90EE90;
+            border-radius: 10px;
+            font-size: 1em;
+            background: #FAFFF0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .input-group select:focus {
+            outline: none;
+            border-color: #228B22;
+            background: white;
+        }
+        
+        .help-text {
+            font-size: 0.85em;
+            color: #556B2F;
+            margin-top: 5px;
+            font-style: italic;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .help-text::before {
+            content: "💡";
+            font-size: 1.2em;
+        }
+        
+        .temperature-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .calculate-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #228B22 0%, #6B8E23 100%);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.3em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+            box-shadow: 0 5px 15px rgba(34, 139, 34, 0.4);
+        }
+        
+        .calculate-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(34, 139, 34, 0.5);
+            background: linear-gradient(135deg, #2E8B57 0%, #3CB371 100%);
+        }
+        
+        .calculate-btn:active {
+            transform: translateY(0);
+        }
+        
+        .result-section {
+            min-height: 400px;
+        }
+        
+        .result-section h2 {
+            color: #2E5902;
+            margin-bottom: 25px;
+            font-size: 1.8em;
+            border-bottom: 3px solid #6B8E23;
+            padding-bottom: 10px;
+        }
+        
+        .result-content {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .result-content.show {
+            display: block;
+        }
+        
+        .climate-code {
+            display: inline-block;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #228B22 0%, #32CD32 100%);
+            color: white;
+            border-radius: 15px;
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 20px rgba(34, 139, 34, 0.4);
+            border: 3px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .climate-name {
+            font-size: 1.5em;
+            color: #2E5902;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        
+        .explanation-section {
+            background: linear-gradient(135deg, #F0FFF0 0%, #E8F5E9 100%);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 2px solid #90EE90;
+        }
+        
+        .explanation-section h3 {
+            color: #2E5902;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .explanation-section p {
+            line-height: 1.8;
+            color: #3E5A02;
+            margin-bottom: 10px;
+            font-size: 1.05em;
+        }
+        
+        .calculation-steps {
+            background: linear-gradient(135deg, #FFF9E6 0%, #FFF3CD 100%);
+            border-left: 5px solid #FFD700;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        
+        .calculation-steps h4 {
+            color: #8B6914;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+        
+        .calculation-steps ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        
+        .calculation-steps li {
+            padding: 8px 0;
+            color: #6B5A00;
+            font-size: 1.05em;
+            line-height: 1.6;
+        }
+        
+        .calculation-steps li:before {
+            content: "🌿 ";
+            font-size: 1.2em;
+            margin-right: 5px;
+        }
+        
+        .characteristics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .char-item {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            border: 2px solid #90EE90;
+            transition: all 0.3s ease;
+        }
+        
+        .char-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(34, 139, 34, 0.2);
+            border-color: #228B22;
+        }
+        
+        .char-item h4 {
+            color: #2E5902;
+            margin-bottom: 8px;
+            font-size: 1em;
+        }
+        
+        .char-item p {
+            color: #556B2F;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+        
+        .error-message {
+            background: linear-gradient(135deg, #FFE5E5 0%, #FFCCCC 100%);
+            color: #8B0000;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #FF6B6B;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .error-message.show {
+            display: block;
+            animation: shake 0.5s ease;
+        }
+        
+        .info-box {
+            background: linear-gradient(135deg, #E6F7FF 0%, #D1ECFF 100%);
+            border: 2px solid #87CEEB;
+            border-radius: 12px;
+            padding: 18px;
+            margin-bottom: 20px;
+            color: #003D5C;
+        }
+        
+        .info-box h4 {
+            margin-bottom: 12px;
+            font-size: 1.15em;
+            color: #00557B;
+        }
+        
+        .info-box p {
+            line-height: 1.7;
+            font-size: 1.02em;
+        }
+        
+        .learning-tip {
+            background: linear-gradient(135deg, #FFF9E6 0%, #FFE9A0 100%);
+            border: 2px solid #FFD700;
+            border-radius: 12px;
+            padding: 18px;
+            margin: 20px 0;
+            border-left: 6px solid #FFA500;
+        }
+        
+        .learning-tip h4 {
+            color: #8B6914;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .learning-tip h4::before {
+            content: "📚";
+            font-size: 1.3em;
+        }
+        
+        .learning-tip p {
+            color: #6B5A00;
+            line-height: 1.7;
+            font-size: 1.02em;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from { 
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .temperature-inputs {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+        
+        .legend {
+            background: linear-gradient(135deg, #E8F4FD 0%, #CCE7FF 100%);
+            border: 2px solid #87CEEB;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .legend h4 {
+            color: #00557B;
+            margin-bottom: 15px;
+            font-size: 1.15em;
+        }
+        
+        .legend ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .legend li {
+            padding: 8px 0;
+            color: #003D5C;
+            font-size: 0.95em;
+            line-height: 1.6;
+        }
+        
+        .legend li::before {
+            content: "🌍 ";
+            margin-right: 8px;
+        }
+        
+        .example-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        
+        .example-btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            color: white;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+        }
+        
+        .example-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 12px rgba(0,0,0,0.3);
+        }
+        
+        .example-btn.mediterranean {
+            background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+        }
+        
+        .example-btn.tropical {
+            background: linear-gradient(135deg, #06A77D 0%, #00D9FF 100%);
+        }
+        
+        .example-btn.desert {
+            background: linear-gradient(135deg, #FFD93D 0%, #F4A460 100%);
+            color: #4A4A4A;
+        }
+        
+        .example-btn.continental {
+            background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+        }
+        
+        .visual-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .indicator-hot { background: #FF6B35; }
+        .indicator-warm { background: #FFD93D; }
+        .indicator-cool { background: #4A90E2; }
+        .indicator-cold { background: #87CEEB; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌍 Calculadora Climática de Köppen</h1>
+            <p>Aprende a clasificar los climas del mundo de forma interactiva</p>
+            <div class="learning-badge">🎓 Herramienta Didáctica para Estudiantes</div>
+            <p style="font-size: 0.9em; margin-top: 10px;">UNED - Geografía General I</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="card input-section">
+                <h2>📊 Parámetros Climáticos</h2>
+                
+                <div class="info-box">
+                    <h4>👋 ¡Bienvenido/a!</h4>
+                    <p>Esta calculadora te ayudará a comprender cómo funciona la clasificación climática de Köppen. Introduce los datos de una estación meteorológica y descubre paso a paso cómo se determina su tipo de clima.</p>
+                </div>
+                
+                <div class="learning-tip">
+                    <h4>¿Qué es Köppen?</h4>
+                    <p>La clasificación de Köppen es un sistema creado por el climatólogo Wladimir Köppen en 1900. Organiza los climas del mundo usando letras que representan características de temperatura y precipitación.</p>
+                </div>
+                
+                <div class="input-group">
+                    <label>🌡️ Temperatura Media Anual (°C)</label>
+                    <input type="number" id="tempAnual" step="0.1" placeholder="Ej: 15.5">
+                    <div class="help-text">Promedio de las temperaturas medias de todos los meses</div>
+                </div>
+                
+                <div class="temperature-inputs">
+                    <div class="input-group">
+                        <label>❄️ Temperatura del Mes más Frío (°C)</label>
+                        <input type="number" id="tempFrio" step="0.1" placeholder="Ej: 5.0">
+                        <div class="help-text">Media del mes con menos temperatura</div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>☀️ Temperatura del Mes más Cálido (°C)</label>
+                        <input type="number" id="tempCalido" step="0.1" placeholder="Ej: 25.0">
+                        <div class="help-text">Media del mes con más temperatura</div>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label>💧 Precipitación Total Anual (mm)</label>
+                    <input type="number" id="precipAnual" step="0.1" placeholder="Ej: 600">
+                    <div class="help-text">Suma de la lluvia/nieve de todo el año</div>
+                </div>
+                
+                <div class="input-group">
+                    <label>🌧️ ¿Cuándo llueve más?</label>
+                    <select id="distribucionPrecip">
+                        <option value="">Selecciona una opción...</option>
+                        <option value="uniforme">☔ Llueve todo el año por igual</option>
+                        <option value="verano_seco">☀️ Verano seco (tipo mediterráneo)</option>
+                        <option value="invierno_seco">❄️ Invierno seco (tipo monzónico)</option>
+                        <option value="monzonico">🌊 Monzónico (estación seca muy corta)</option>
+                    </select>
+                    <div class="help-text">Patrón estacional de las precipitaciones</div>
+                </div>
+                
+                <div class="temperature-inputs">
+                    <div class="input-group">
+                        <label>🏜️ Precipitación del Mes más Seco (mm)</label>
+                        <input type="number" id="precipMinima" step="0.1" placeholder="Ej: 10">
+                        <div class="help-text">Importante para climas secos</div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>📊 % de Precipitación en Invierno</label>
+                        <input type="number" id="precipInvierno" step="0.1" placeholder="Ej: 70" min="0" max="100">
+                        <div class="help-text">Oct-Mar (HN) / Abr-Sep (HS)</div>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label>⛰️ Altitud (metros) - Opcional</label>
+                    <input type="number" id="altitud" step="1" placeholder="Ej: 1500">
+                    <div class="help-text">Para identificar climas de montaña</div>
+                </div>
+                
+                <div class="input-group">
+                    <label>🌐 Hemisferio</label>
+                    <select id="hemisferio">
+                        <option value="norte">Hemisferio Norte</option>
+                        <option value="sur">Hemisferio Sur</option>
+                    </select>
+                </div>
+                
+                <div class="info-box" style="background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%); border-color: #81C784;">
+                    <h4>🎯 Prueba con ejemplos reales</h4>
+                    <p style="margin-bottom: 12px;">Carga datos de climas conocidos para aprender:</p>
+                    <div class="example-buttons">
+                        <button class="example-btn mediterranean" onclick="cargarEjemplo('mediterraneo')">🍇 Mediterráneo</button>
+                        <button class="example-btn tropical" onclick="cargarEjemplo('ecuatorial')">🌴 Ecuatorial</button>
+                        <button class="example-btn desert" onclick="cargarEjemplo('desertico')">🏜️ Desértico</button>
+                        <button class="example-btn continental" onclick="cargarEjemplo('continental')">🌲 Continental</button>
+                    </div>
+                </div>
+                
+                <button class="calculate-btn" onclick="calcularClima()">
+                    🔍 Calcular y Aprender
+                </button>
+            </div>
+            
+            <div class="card result-section">
+                <h2>📋 Tu Resultado</h2>
+                
+                <div class="error-message" id="errorMessage"></div>
+                
+                <div class="result-content" id="resultContent">
+                    <div id="climateCode" class="climate-code"></div>
+                    <div id="climateName" class="climate-name"></div>
+                    
+                    <div class="calculation-steps" id="calculationSteps">
+                        <h4>🧮 Paso a Paso: Cómo lo Calculamos</h4>
+                        <ul id="stepsList"></ul>
+                    </div>
+                    
+                    <div class="learning-tip" id="learningTip"></div>
+                    
+                    <div class="explanation-section">
+                        <h3>📖 Explicación Detallada</h3>
+                        <div id="explanationText"></div>
+                    </div>
+                    
+                    <div class="explanation-section">
+                        <h3>🌍 Características de este Clima</h3>
+                        <div class="characteristics" id="characteristics"></div>
+                    </div>
+                    
+                    <div class="explanation-section">
+                        <h3>🗺️ ¿Dónde encontramos este clima?</h3>
+                        <p id="regionsText"></p>
+                    </div>
+                    
+                    <div class="legend">
+                        <h4>📚 Decodificando las letras de Köppen</h4>
+                        <ul>
+                            <li><strong>Primera letra:</strong> Indica el grupo climático principal (A=Tropical, B=Seco, C=Templado, D=Continental, E=Polar)</li>
+                            <li><strong>Segunda letra:</strong> Indica el régimen de precipitaciones (cuándo llueve más)</li>
+                            <li><strong>Tercera letra:</strong> Indica las características térmicas (qué tan caluroso es el verano)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function calcularClima() {
+            const errorMsg = document.getElementById('errorMessage');
+            errorMsg.classList.remove('show');
+            
+            const tempAnual = parseFloat(document.getElementById('tempAnual').value);
+            const tempFrio = parseFloat(document.getElementById('tempFrio').value);
+            const tempCalido = parseFloat(document.getElementById('tempCalido').value);
+            const precipAnual = parseFloat(document.getElementById('precipAnual').value);
+            const precipMinima = parseFloat(document.getElementById('precipMinima').value) || 0;
+            const precipInvierno = parseFloat(document.getElementById('precipInvierno').value) || 50;
+            const altitud = parseFloat(document.getElementById('altitud').value) || 0;
+            const distribucion = document.getElementById('distribucionPrecip').value;
+            const hemisferio = document.getElementById('hemisferio').value;
+            
+            if (isNaN(tempAnual) || isNaN(tempFrio) || isNaN(tempCalido) || isNaN(precipAnual)) {
+                mostrarError('⚠️ Por favor, completa todos los campos obligatorios de temperatura y precipitación.');
+                return;
+            }
+            
+            if (tempFrio > tempCalido) {
+                mostrarError('⚠️ La temperatura del mes más frío no puede ser mayor que la del mes más cálido. Revisa tus datos.');
+                return;
+            }
+            
+            if (precipAnual < 0 || tempAnual < -50 || tempAnual > 50) {
+                mostrarError('⚠️ Los valores parecen poco realistas. Verifica que las temperaturas estén entre -50°C y 50°C.');
+                return;
+            }
+            
+            let climateCode = '';
+            let climateName = '';
+            let explanation = '';
+            let steps = [];
+            let characteristics = {};
+            let regions = '';
+            let learningTip = '';
+            
+            if (altitud >= 3000) {
+                climateCode = 'H';
+                climateName = 'Clima de Alta Montaña';
+                steps.push('La altitud es mayor o igual a 3000 metros');
+                steps.push('A esta altura, el clima está dominado por la baja presión atmosférica');
+                steps.push('Resultado: Clima H (Alta Montaña)');
+                explanation = `Con una altitud de ${altitud} metros, estamos en un clima de alta montaña. Aquí las condiciones son extremas: las temperaturas son muy bajas todo el año, las precipitaciones caen principalmente como nieve, y el oxígeno es escaso. La vegetación es alpina o directamente inexistente.`;
+                learningTip = '🏔️ Curiosidad: Por cada 100 metros que subimos, la temperatura desciende aproximadamente 0.65°C. ¡Eso significa que a 3000m puede hacer hasta 20°C menos que al nivel del mar!';
+                characteristics = {
+                    'Temperatura': 'Muy baja todo el año',
+                    'Precipitación': 'Principalmente en forma de nieve',
+                    'Vegetación': 'Alpina o ausente',
+                    'Presión atmosférica': 'Muy reducida (aire enrarecido)'
+                };
+                regions = 'Cumbres del Himalaya (Everest, K2), Andes (Aconcagua), Alpes, Kilimanjaro, Montes Rocosos';
+            }
+            else if (altitud >= 1000 && (tempCalido - tempFrio) > 5) {
+                climateCode = 'G';
+                climateName = 'Clima de Montaña';
+                steps.push('La altitud es mayor o igual a 1000 metros');
+                steps.push(`La variación térmica anual es ${(tempCalido - tempFrio).toFixed(1)}°C (mayor a 5°C)`);
+                steps.push('Resultado: Clima G (Montaña)');
+                explanation = `La altitud de ${altitud} metros modifica el clima local. En las montañas, la temperatura desciende con la altura (gradiente térmico de 0.65°C por cada 100m), las precipitaciones aumentan, y la vegetación se dispone en pisos altitudinales: desde bosques en las bases hasta praderas alpinas en las cumbres.`;
+                learningTip = '⛰️ Sabías que: Las montañas crean sus propios microclimas. Una ladera orientada al sur (en el hemisferio norte) puede ser mucho más cálida que una ladera norte. ¡Por eso la vegetación cambia según la orientación!';
+                characteristics = {
+                    'Gradiente térmico': '0.65°C de descenso por cada 100m',
+                    'Precipitación': 'Aumenta con la altitud (barlovento)',
+                    'Vegetación': 'Organizada en pisos altitudinales',
+                    'Vientos': 'Locales (brisas de valle-montaña)'
+                };
+                regions = 'Sierra Nevada (España), Pirineos, Alpes suizos, Montañas Rocosas, Sierra Madre (México)';
+            }
+            else {
+                const evapotranspiracion = calcularEvapotranspiracion(tempAnual, precipInvierno);
+                steps.push(`Calculamos la evapotranspiración potencial: ${evapotranspiracion.toFixed(1)}mm`);
+                steps.push(`Usamos la fórmula: e = 20T + 490 - 7×PPW (donde T es temperatura anual y PPW es % precipitación invernal)`);
+                steps.push(`e = 20×${tempAnual} + 490 - 7×${precipInvierno} = ${evapotranspiracion.toFixed(1)}mm`);
+                
+                if (precipAnual < evapotranspiracion / 2) {
+                    climateCode = tempAnual >= 18 ? 'BWh' : 'BWk';
+                    climateName = tempAnual >= 18 ? 'Clima Desértico Cálido' : 'Clima Desértico Frío';
+                    steps.push(`La precipitación (${precipAnual}mm) es menor que la mitad de la evapotranspiración (${(evapotranspiracion/2).toFixed(1)}mm)`);
+                    steps.push('Esto significa que el suelo pierde más agua de la que recibe → DESIERTO');
+                    steps.push(tempAnual >= 18 ? 'Como la temperatura anual es ≥ 18°C → BWh (Desértico Cálido)' : 'Como la temperatura anual es < 18°C → BWk (Desértico Frío)');
+                    
+                    explanation = `Este es un clima desértico porque la precipitación anual (${precipAnual}mm) es menor que la mitad de lo que se evapora (${(evapotranspiracion/2).toFixed(1)}mm). Esto significa que el suelo está constantemente perdiendo más agua de la que recibe. `;
+                    explanation += tempAnual >= 18 
+                        ? 'Es un desierto cálido (BWh) con temperaturas elevadas todo el año, típico de latitudes subtropicales donde dominan los anticiclones.'
+                        : 'Es un desierto frío (BWk) con inviernos rigurosos, típico del interior de los continentes en latitudes medias donde la continentalidad es extrema.';
+                    
+                    learningTip = tempAnual >= 18 
+                        ? '🏜️ Datos curiosos: El desierto del Sahara puede alcanzar 50°C durante el día, pero bajar a 0°C por la noche. ¡La falta de humedad hace que el calor no se retenga!'
+                        : '🏜️ Sabías que: Los desiertos fríos como el Gobi tienen nieve en invierno. ¡Un desierto no es siempre cálido! Lo que lo define es la falta de agua, no el calor.';
+                    
+                    characteristics = {
+                        'Aridez': 'Extrema (P < e/2)',
+                        'Oscilación térmica diaria': 'Muy alta (hasta 40°C)',
+                        'Vegetación': 'Xerófila muy escasa (cactus, arbustos)',
+                        'Humedad relativa': 'Muy baja (< 50%)'
+                    };
+                    regions = climateCode === 'BWh' ? 'Sahara, Desierto Arábigo, Desierto de Australia, Atacama' : 'Desierto del Gobi, Kazajistán, Patagonia argentina';
+                }
+                else if (precipAnual < evapotranspiracion) {
+                    climateCode = tempAnual >= 18 ? 'BSh' : 'BSk';
+                    climateName = tempAnual >= 18 ? 'Clima Estepario Cálido' : 'Clima Estepario Frío';
+                    steps.push(`La precipitación (${precipAnual}mm) es menor que la evapotranspiración (${evapotranspiracion.toFixed(1)}mm)`);
+                    steps.push('Pero no llega a ser desértico → ESTEPA (semiárida)');
+                    steps.push(tempAnual >= 18 ? 'Como T anual ≥ 18°C → BSh (Estepario Cálido)' : 'Como T anual < 18°C → BSk (Estepario Frío)');
+                    
+                    explanation = `Este es un clima estepario porque la precipitación anual (${precipAnual}mm) es menor que la evapotranspiración potencial (${evapotranspiracion.toFixed(1)}mm), pero aún hay suficiente agua para permitir la vida de gramíneas. `;
+                    explanation += tempAnual >= 18 
+                        ? 'Es una estepa cálida (BSh), típica de los márgenes de los desiertos tropicales. Aquí encontramos sabanas secas y pastizales.'
+                        : 'Es una estepa fría (BSk), característica de las grandes llanuras continentales. Las praderas dominan el paisaje.';
+                    
+                    learningTip = tempAnual >= 18
+                        ? '🌾 Descubre: Las estepas cálidas son la transición entre los desiertos y las sabanas. Aquí viven animales adaptados como gacelas y ñus.'
+                        : '🌾 Dato interesante: Las estepas frías fueron el hogar de los pueblos nómadas mongoles. Sus caballos se adaptaron perfectamente a estos pastizales.';
+                    
+                    characteristics = {
+                        'Aridez': 'Semiárida (e/2 < P < e)',
+                        'Precipitación anual': 'Entre 250 y 500mm',
+                        'Vegetación': 'Herbácea, sin árboles (gramíneas)',
+                        'Suelos': 'Pardos de estepa, ricos en materia orgánica'
+                    };
+                    regions = climateCode === 'BSh' ? 'Sahel africano, India occidental, Australia interior' : 'Grandes Llanuras (EEUU), Pampa argentina, Mongolia interior';
+                }
+                else {
+                    steps.push('La precipitación es mayor que la evapotranspiración');
+                    steps.push('No es un clima seco → Pasamos a evaluar la temperatura');
+                    
+                    if (tempFrio > 18) {
+                        climateCode = 'A';
+                        climateName = 'Clima Tropical/Ecuatorial';
+                        steps.push('La temperatura del mes más frío es mayor a 18°C');
+                        steps.push('Resultado: Grupo A (Clima Tropical)');
+                        
+                        if (distribucion === 'uniforme' || precipMinima > 60) {
+                            climateCode += 'f';
+                            climateName = 'Clima Ecuatorial';
+                            steps.push('Las precipitaciones son abundantes todo el año → Af (Ecuatorial)');
+                            explanation = 'Clima ecuatorial sin estación seca. Las temperaturas son constantes todo el año (entre 25-27°C) y llueve abundantemente todos los meses. La selva ecuatorial es el ecosistema más biodiverso del planeta.';
+                            learningTip = '🌳 ¡Increíble! La selva amazónica, con clima Af, produce el 20% del oxígeno del mundo y alberga 1 de cada 10 especies conocidas. ¡Es el pulmón del planeta!';
+                            regions = 'Cuenca del Amazonas, Cuenca del Congo, Indonesia, Malasia, Guinea Ecuatorial';
+                        } else if (distribucion === 'monzonico' && precipAnual > 2500 - 25 * precipMinima) {
+                            climateCode += 'm';
+                            climateName = 'Clima Monzónico';
+                            steps.push('Tiene una corta estación seca pero lluvias muy intensas en verano → Am (Monzónico)');
+                            explanation = 'Clima monzónico con una corta estación seca que queda compensada por lluvias torrenciales en la estación húmeda. Los monzones son vientos estacionales que traen precipitaciones extremas.';
+                            learningTip = '🌊 Fenómeno natural: Durante el monzón, pueden caer más de 10.000mm de lluvia en unos pocos meses. ¡Cherrapunji en India es uno de los lugares más lluviosos del planeta!';
+                            regions = 'Costa occidental de India, Myanmar, Bangladesh, Costa caribeña de Centroamérica';
+                        } else if (distribucion === 'invierno_seco') {
+                            climateCode += 'w';
+                            climateName = 'Clima Tropical de Sabana';
+                            steps.push('El invierno es seco y el verano lluvioso → Aw (Tropical de Sabana)');
+                            explanation = 'Clima tropical con estación seca en invierno. Durante los meses secos, los árboles pierden sus hojas y los animales migran en busca de agua. Es el clima típico de las grandes sabanas africanas.';
+                            learningTip = '🦁 Naturaleza fascinante: En las sabanas Aw ocurre la gran migración de ñus en África: más de 2 millones de animales se mueven siguiendo las lluvias estacionales.';
+                            regions = 'África oriental (Kenia, Tanzania), Brasil central (Cerrado), norte de Australia, Llanos de Venezuela';
+                        } else if (distribucion === 'verano_seco') {
+                            climateCode += 's';
+                            climateName = 'Clima Tropical con verano seco';
+                            steps.push('Tiene verano seco (poco común en trópicos) → As');
+                            explanation = 'Clima tropical con la peculiaridad de tener el verano seco. Es poco común porque generalmente en los trópicos el verano es la estación lluviosa.';
+                            learningTip = '🌴 Rareza climática: El clima As es muy poco frecuente. Se da en algunas costas tropicales donde los vientos dominantes cambian de dirección.';
+                            regions = 'Algunas zonas costeras del sureste asiático, costa de Sri Lanka';
+                        }
+                        
+                        characteristics = {
+                            'Temperatura': 'Siempre cálida (> 18°C)',
+                            'Amplitud térmica anual': 'Muy baja (< 5-10°C)',
+                            'Vegetación': 'Selva tropical o sabana',
+                            'Estaciones': 'Definidas por precipitación, no por temperatura'
+                        };
+                    }
+                    else if (tempFrio > -3) {
+                        climateCode = 'C';
+                        climateName = 'Clima Templado';
+                        steps.push('La temperatura del mes más frío está entre -3°C y 18°C');
+                        steps.push('Resultado: Grupo C (Clima Templado)');
+                        
+                        if (distribucion === 'verano_seco') {
+                            climateCode += 's';
+                            steps.push('El verano es seco → Régimen mediterráneo (Cs)');
+                        } else if (distribucion === 'invierno_seco') {
+                            climateCode += 'w';
+                            steps.push('El invierno es seco → Régimen subtropical monzónico (Cw)');
+                        } else {
+                            climateCode += 'f';
+                            steps.push('No hay estación seca → Régimen oceánico o subtropical húmedo (Cf)');
+                        }
+                        
+                        if (tempCalido >= 22) {
+                            climateCode += 'a';
+                            steps.push('El mes más cálido tiene ≥ 22°C → Verano caluroso (a)');
+                        } else if (countMonthsAbove10(tempCalido, tempFrio) >= 4) {
+                            climateCode += 'b';
+                            steps.push('Al menos 4 meses con T > 10°C → Verano cálido (b)');
+                        } else {
+                            climateCode += 'c';
+                            steps.push('Menos de 4 meses con T > 10°C → Verano fresco (c)');
+                        }
+                        
+                        if (climateCode === 'Cfa') {
+                            climateName = 'Clima Subtropical Húmedo';
+                            explanation = 'Clima subtropical húmedo con veranos calurosos y húmedos e inviernos suaves. Las precipitaciones son abundantes todo el año. Es el clima ideal para la agricultura intensiva.';
+                            learningTip = '🌽 Agricultura: Este clima es perfecto para cultivos variados. En estas zonas se producen grandes cantidades de maíz, soja, algodón y arroz.';
+                            regions = 'Sureste de Estados Unidos, este de China, noreste de Argentina (Buenos Aires), sur de Brasil';
+                        } else if (climateCode === 'Cfb') {
+                            climateName = 'Clima Oceánico';
+                            explanation = 'Clima oceánico con temperaturas moderadas todo el año y precipitaciones regulares. La influencia del océano suaviza las temperaturas, evitando extremos de calor y frío. Perfecto para praderas y bosques caducifolios.';
+                            learningTip = '🌧️ Curiosidad: El clima oceánico es famoso por sus días nublados y lluvia frecuente. Londres tiene fama de lluvioso, ¡pero París recibe más precipitación anual!';
+                            regions = 'Europa occidental (Reino Unido, Francia, norte de España), sur de Chile, Nueva Zelanda, Tasmania';
+                        } else if (climateCode === 'Csa') {
+                            climateName = 'Clima Mediterráneo Típico';
+                            explanation = 'Clima mediterráneo con veranos secos y calurosos e inviernos suaves y lluviosos. Este patrón se debe a la alternancia del anticiclón subtropical (verano) y el frente polar (invierno). Ideal para olivos, viñedos y cítricos.';
+                            learningTip = '🍇 Patrimonio cultural: El clima mediterráneo dio origen a civilizaciones antiguas. Los olivos, las viñas y el trigo fueron la base de las culturas griega y romana.';
+                            regions = 'Cuenca mediterránea (España, Italia, Grecia), California, Chile central, Sudáfrica (Ciudad del Cabo)';
+                        } else if (climateCode === 'Csb') {
+                            climateName = 'Clima Mediterráneo Oceánico';
+                            explanation = 'Clima mediterráneo con influencia oceánica. Los veranos son secos pero más frescos que en el Csa, gracias a la cercanía del océano.';
+                            learningTip = '🌊 Vinos premium: Este clima es perfecto para viñedos de alta calidad. ¡Napa Valley en California y la región de Oporto en Portugal tienen este clima!';
+                            regions = 'Costa de Portugal, norte de California, suroeste de Australia, costa de Chile';
+                        } else if (climateCode === 'Cwa') {
+                            climateName = 'Clima Subtropical con Invierno Seco';
+                            explanation = 'Clima subtropical con marcada estación seca en invierno y veranos lluviosos y calurosos. Es común en zonas de transición entre climas tropicales y templados.';
+                            learningTip = '🎋 Bambú gigante: Este clima es ideal para el bambú. En China, los bosques de bambú son el hábitat del oso panda.';
+                            regions = 'Norte de India, sur de China interior, norte de Vietnam, altiplano de México';
+                        }
+                        
+                        characteristics = {
+                            'Invierno': 'Suave (-3 a 18°C)',
+                            'Verano': tempCalido >= 22 ? 'Caluroso (> 22°C)' : 'Moderado (< 22°C)',
+                            'Vegetación': distribucion === 'verano_seco' ? 'Bosque mediterráneo (esclerófilo)' : 'Bosque caducifolio',
+                            'Estaciones': 'Cuatro estaciones bien definidas'
+                        };
+                    }
+                    else if (tempCalido >= 10) {
+                        climateCode = 'D';
+                        climateName = 'Clima Continental';
+                        steps.push('El mes más frío tiene menos de -3°C');
+                        steps.push('El mes más cálido supera los 10°C');
+                        steps.push('Resultado: Grupo D (Clima Continental)');
+                        
+                        if (distribucion === 'invierno_seco') {
+                            climateCode += 'w';
+                            steps.push('Invierno seco → Continental monzónico (Dw)');
+                        } else if (distribucion === 'verano_seco') {
+                            climateCode += 's';
+                            steps.push('Verano seco → Continental mediterráneo (Ds)');
+                        } else {
+                            climateCode += 'f';
+                            steps.push('Sin estación seca → Continental húmedo (Df)');
+                        }
+                        
+                        if (tempCalido >= 22) {
+                            climateCode += 'a';
+                            climateName = 'Clima Continental Húmedo con Verano Cálido';
+                            steps.push('El mes más cálido supera los 22°C → Verano caluroso (a)');
+                            explanation = 'Clima continental con veranos calurosos e inviernos muy fríos. La amplitud térmica anual es muy alta (puede superar los 35°C). Los inviernos son largos y rigurosos, mientras que los veranos son cortos pero intensos.';
+                            learningTip = '🌡️ Extremos: En Moscú (Dfa), la temperatura puede variar desde -30°C en enero hasta +30°C en julio. ¡Eso es un rango de 60°C!';
+                            regions = 'Medio Oeste de Estados Unidos, Ucrania, norte de China (Beijing), Europa del Este';
+                        } else if (countMonthsAbove10(tempCalido, tempFrio) >= 4) {
+                            climateCode += 'b';
+                            climateName = 'Clima Continental Húmedo con Verano Fresco';
+                            steps.push('Al menos 4 meses superan los 10°C → Verano cálido (b)');
+                            explanation = 'Clima continental con veranos moderados e inviernos rigurosos. Domina el bosque boreal (taiga) y los lagos glaciares. Los inviernos son largos y con abundante nieve.';
+                            learningTip = '🌲 Bosque boreal: La taiga es el bioma terrestre más extenso del planeta. Estos bosques de coníferas almacenan enormes cantidades de carbono.';
+                            regions = 'Canadá, Rusia europea, Escandinavia (sur de Finlandia y Suecia), Mongolia';
+                        } else if (tempFrio >= -38) {
+                            climateCode += 'c';
+                            climateName = 'Clima Subártico';
+                            steps.push('Solo 1-3 meses superan los 10°C → Subártico (c)');
+                            explanation = 'Clima subártico con veranos muy cortos y frescos e inviernos extremadamente largos y fríos. La taiga domina el paisaje. El suelo está congelado gran parte del año (permafrost discontinuo).';
+                            learningTip = '❄️ Supervivencia extrema: En el subártico, el sol apenas se eleva en invierno y en verano no se pone (sol de medianoche). La naturaleza se adapta a estos extremos.';
+                            regions = 'Siberia central, Alaska interior, norte de Canadá, norte de Escandinavia';
+                        } else {
+                            climateCode += 'd';
+                            climateName = 'Clima Subártico Extremo';
+                            steps.push('El mes más frío tiene menos de -38°C → Subártico extremo (d)');
+                            explanation = 'Clima subártico extremo con los inviernos más fríos del planeta (fuera de la Antártida). Las condiciones son extremas de continentalidad. En Oymyakon (Siberia) se han registrado -67.7°C.';
+                            learningTip = '🥶 Polo del frío: Oymyakon y Verkhoyansk (ambos en Siberia oriental) compiten por ser el lugar habitado más frío de la Tierra. ¡Allí el mercurio se congela!';
+                            regions = 'Siberia oriental (Yakutsk, Verkhoyansk, Oymyakon)';
+                        }
+                        
+                        characteristics = {
+                            'Amplitud térmica anual': 'Muy alta (> 30-40°C)',
+                            'Invierno': 'Muy frío (< -3°C, a veces < -40°C)',
+                            'Verano': tempCalido >= 22 ? 'Caluroso pero corto' : 'Corto y fresco',
+                            'Vegetación': 'Bosque boreal (taiga) o pradera continental'
+                        };
+                    }
+                    else {
+                        climateCode = 'E';
+                        climateName = 'Clima Polar';
+                        steps.push('El mes más cálido no llega a 10°C');
+                        steps.push('Resultado: Grupo E (Clima Polar)');
+                        
+                        if (tempCalido > 0) {
+                            climateCode += 'T';
+                            climateName = 'Clima de Tundra';
+                            steps.push('Al menos un mes supera los 0°C → Tundra (ET)');
+                            explanation = 'Clima de tundra con un breve periodo de deshielo en verano (2-3 meses) que permite el desarrollo de vegetación baja: musgos, líquenes y plantas herbáceas. El suelo permanece congelado en profundidad (permafrost).';
+                            learningTip = '🦌 Vida adaptada: Los renos y caribúes migran a la tundra en verano para alimentarse de los líquenes. En invierno regresan al sur, a la taiga.';
+                            regions = 'Norte de Siberia, norte de Canadá, Alaska, costa de Groenlandia, Islandia interior';
+                            
+                            characteristics = {
+                                'Verano': 'Muy corto (2-3 meses)',
+                                'Permafrost': 'Presente (suelo congelado permanente)',
+                                'Vegetación': 'Tundra (musgos, líquenes)',
+                                'Precipitación': 'Muy escasa (< 250mm)'
+                            };
+                        } else {
+                            climateCode += 'F';
+                            climateName = 'Clima de Hielos Perpetuos';
+                            steps.push('Todos los meses están por debajo de 0°C → Hielos perpetuos (EF)');
+                            explanation = 'Clima de hielos perpetuos sin ningún mes con temperaturas positivas. El suelo está permanentemente cubierto de hielo y nieve. No existe vegetación. Es el clima más extremo de la Tierra.';
+                            learningTip = '🧊 Récord mundial: La temperatura más baja jamás registrada fue -89.2°C en la estación Vostok, Antártida, en 1983. ¡El CO₂ se congela a -78.5°C!';
+                            regions = 'Antártida (excepto costas), interior de Groenlandia';
+                            
+                            characteristics = {
+                                'Temperatura': 'Siempre por debajo de 0°C',
+                                'Precipitación': 'Muy escasa (< 200mm, en forma de nieve)',
+                                'Vegetación': 'Inexistente',
+                                'Hielo': 'Permanente (hasta 4km de espesor)'
+                            };
+                        }
+                    }
+                }
+            }
+            
+            mostrarResultado(climateCode, climateName, explanation, steps, characteristics, regions, learningTip);
+        }
+        
+        function calcularEvapotranspiracion(tempAnual, precipInvierno) {
+            return 20 * tempAnual + 490 - 7 * precipInvierno;
+        }
+        
+        function countMonthsAbove10(tempCalido, tempFrio) {
+            const amplitud = tempCalido - tempFrio;
+            if (tempCalido < 10) return 0;
+            if (tempFrio > 10) return 12;
+            const mesesCalidos = Math.round(12 * (tempCalido - 10) / amplitud);
+            return Math.min(12, Math.max(1, mesesCalidos));
+        }
+        
+        function mostrarError(mensaje) {
+            const errorMsg = document.getElementById('errorMessage');
+            errorMsg.textContent = mensaje;
+            errorMsg.classList.add('show');
+            document.getElementById('resultContent').classList.remove('show');
+        }
+        
+        function mostrarResultado(code, name, explanation, steps, characteristics, regions, learningTip) {
+            document.getElementById('errorMessage').classList.remove('show');
+            
+            document.getElementById('climateCode').textContent = code;
+            document.getElementById('climateName').textContent = name;
+            
+            const stepsList = document.getElementById('stepsList');
+            stepsList.innerHTML = '';
+            steps.forEach(step => {
+                const li = document.createElement('li');
+                li.textContent = step;
+                stepsList.appendChild(li);
+            });
+            
+            document.getElementById('explanationText').innerHTML = `<p>${explanation}</p>`;
+            
+            const codeExplanation = explicarCodigo(code);
+            document.getElementById('explanationText').innerHTML += codeExplanation;
+            
+            if (learningTip) {
+                const learningTipDiv = document.getElementById('learningTip');
+                learningTipDiv.innerHTML = `<h4>Aprende Más</h4><p>${learningTip}</p>`;
+                learningTipDiv.style.display = 'block';
+            }
+            
+            const charDiv = document.getElementById('characteristics');
+            charDiv.innerHTML = '';
+            for (const [key, value] of Object.entries(characteristics)) {
+                const item = document.createElement('div');
+                item.className = 'char-item';
+                item.innerHTML = `<h4>${key}</h4><p>${value}</p>`;
+                charDiv.appendChild(item);
+            }
+            
+            document.getElementById('regionsText').textContent = regions;
+            
+            document.getElementById('resultContent').classList.add('show');
+            
+            document.querySelector('.result-section').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function explicarCodigo(code) {
+            let html = '<div class="info-box" style="margin-top: 20px; background: linear-gradient(135deg, #FFF9E6 0%, #FFE9A0 100%); border-color: #FFD700;">';
+            html += '<h4>🔤 ¿Qué significa cada letra del código ' + code + '?</h4>';
+            html += '<ul style="list-style: none; padding: 0;">';
+            
+            const firstLetter = code[0];
+            const grupos = {
+                'A': '🌴 Tropical - Sin invierno frío (siempre > 18°C)',
+                'B': '🏜️ Seco - Más evaporación que precipitación',
+                'C': '🍂 Templado - Inviernos suaves (-3°C a 18°C)',
+                'D': '❄️ Continental - Inviernos fríos (< -3°C)',
+                'E': '🧊 Polar - Sin verano cálido (< 10°C)',
+                'G': '⛰️ Montaña - Dominado por la altitud',
+                'H': '🏔️ Alta montaña - Condiciones extremas de altura'
+            };
+            html += `<li style="padding: 8px; line-height: 1.6;"><strong style="font-size: 1.3em; color: #2E5902;">${firstLetter}:</strong> ${grupos[firstLetter] || 'Grupo principal'}</li>`;
+            
+            if (code.length > 1 && code[0] !== 'G' && code[0] !== 'H') {
+                const secondLetter = code[1];
+                const regimenes = {
+                    'f': '💧 Sin estación seca - Llueve todo el año',
+                    's': '☀️ Verano seco - El verano es la estación seca',
+                    'w': '❄️ Invierno seco - El invierno es la estación seca',
+                    'm': '🌊 Monzónico - Lluvias torrenciales en verano',
+                    'S': '🌾 Estepario - Semiárido (tiene algo de vegetación)',
+                    'W': '🏜️ Desértico - Árido extremo (casi sin vegetación)',
+                    'T': '🌿 Tundra - Permite vegetación muy baja',
+                    'F': '❄️ Hielos perpetuos - Sin vegetación'
+                };
+                html += `<li style="padding: 8px; line-height: 1.6;"><strong style="font-size: 1.3em; color: #2E5902;">${secondLetter}:</strong> ${regimenes[secondLetter] || regimenes[secondLetter.toUpperCase()] || 'Régimen de precipitación'}</li>`;
+            }
+            
+            if (code.length > 2) {
+                const thirdLetter = code[2];
+                const temperaturas = {
+                    'a': '🔥 Verano caluroso - Temperatura ≥ 22°C',
+                    'b': '☀️ Verano cálido - 4 o más meses > 10°C',
+                    'c': '🌤️ Verano fresco - Solo 1-3 meses > 10°C',
+                    'd': '🥶 Invierno extremo - Puede llegar a -38°C o menos',
+                    'h': '🌡️ Cálido - Temperatura anual ≥ 18°C',
+                    'k': '❄️ Frío - Temperatura anual < 18°C'
+                };
+                html += `<li style="padding: 8px; line-height: 1.6;"><strong style="font-size: 1.3em; color: #2E5902;">${thirdLetter}:</strong> ${temperaturas[thirdLetter] || 'Característica térmica'}</li>`;
+            }
+            
+            html += '</ul></div>';
+            return html;
+        }
+        
+        function cargarEjemplo(tipo) {
+            const ejemplos = {
+                'mediterraneo': {
+                    tempAnual: 16.5,
+                    tempFrio: 9.5,
+                    tempCalido: 24.8,
+                    precipAnual: 550,
+                    precipMinima: 5,
+                    precipInvierno: 70,
+                    distribucion: 'verano_seco',
+                    altitud: 50
+                },
+                'ecuatorial': {
+                    tempAnual: 26.5,
+                    tempFrio: 25.2,
+                    tempCalido: 27.8,
+                    precipAnual: 2800,
+                    precipMinima: 150,
+                    precipInvierno: 50,
+                    distribucion: 'uniforme',
+                    altitud: 100
+                },
+                'desertico': {
+                    tempAnual: 25,
+                    tempFrio: 15,
+                    tempCalido: 35,
+                    precipAnual: 150,
+                    precipMinima: 0,
+                    precipInvierno: 30,
+                    distribucion: 'verano_seco',
+                    altitud: 500
+                },
+                'continental': {
+                    tempAnual: 8,
+                    tempFrio: -10,
+                    tempCalido: 23,
+                    precipAnual: 600,
+                    precipMinima: 30,
+                    precipInvierno: 40,
+                    distribucion: 'uniforme',
+                    altitud: 200
+                }
+            };
+            
+            if (ejemplos[tipo]) {
+                const ej = ejemplos[tipo];
+                document.getElementById('tempAnual').value = ej.tempAnual;
+                document.getElementById('tempFrio').value = ej.tempFrio;
+                document.getElementById('tempCalido').value = ej.tempCalido;
+                document.getElementById('precipAnual').value = ej.precipAnual;
+                document.getElementById('precipMinima').value = ej.precipMinima;
+                document.getElementById('precipInvierno').value = ej.precipInvierno;
+                document.getElementById('distribucionPrecip').value = ej.distribucion;
+                document.getElementById('altitud').value = ej.altitud;
+            }
+        }
+    </script>
+</body>
+</html>
